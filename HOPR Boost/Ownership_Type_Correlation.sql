@@ -10,12 +10,22 @@ mintCall as (
     where "call_success" = true
 )
 
-,minted as ( 
+,allMinted as ( 
     select "to", "tokenId", "evt_tx_hash", "evt_block_time", "boostType"  
     from hopr_protocol."HoprBoost_evt_Transfer" 
     inner join mintCall on "call_tx_hash" = "evt_tx_hash"
     where "from" = '\x0000000000000000000000000000000000000000' 
 )
+
+,whitelistTokenId as (
+    select distinct "tokenId" from allMinted where "boostType" != 'HODLr'
+)
+
+,minted as (
+    select * from allMinted 
+    where "tokenId" in (select "tokenId" from whitelistTokenId)
+)
+
 
 ,holder as (
     select distinct "tokenId", first_value("to") OVER (partition by "tokenId" order by evt_block_number desc, evt_index desc) as address
@@ -26,6 +36,7 @@ mintCall as (
     '\x2cdd13ddb0346e0f620c8e5826da5d7230341c6e',
     '\x912f4d6607160256787a2ad40da098ac2afe57ac'
     )
+    and "tokenId" in (select "tokenId" from whitelistTokenId)
 )
 
 , holderBoostType as (

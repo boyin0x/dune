@@ -10,11 +10,20 @@ mintCall as (
     where "call_success" = true
 )
 
-,minted as ( 
+,allMinted as ( 
     select "to", "tokenId", "evt_tx_hash", "evt_block_time", "boostType"  
     from hopr_protocol."HoprBoost_evt_Transfer" 
     inner join mintCall on "call_tx_hash" = "evt_tx_hash"
     where "from" = '\x0000000000000000000000000000000000000000' 
+)
+
+,whitelistTokenId as (
+    select distinct "tokenId" from allMinted where "boostType" != 'HODLr'
+)
+
+,minted as (
+    select * from allMinted 
+    where "tokenId" in (select "tokenId" from whitelistTokenId)
 )
 
 ,traded as ( 
@@ -26,6 +35,7 @@ mintCall as (
         ,'\x2cDD13ddB0346E0F620C8E5826Da5d7230341c6E' -- s 2
         ,'\xae933331ef0be122f9499512d3ed4fa3896dcf20' -- s 3
     )
+    and "tokenId" in (select "tokenId" from whitelistTokenId)
 )
 
 -- # How many are earned vs transferred
@@ -51,6 +61,7 @@ mintCall as (
         SELECT "boostTokenId" as "tokenId"  FROM hopr_protocol."HoprStakeSeason3_evt_Redeemed"
         WHERE "factorRegistered" = true
     ) s
+    where "tokenId" in (select "tokenId" from whitelistTokenId)
 )
 
 ,stakedEarned as ( 
@@ -68,6 +79,7 @@ mintCall as (
     '\x2cdd13ddb0346e0f620c8e5826da5d7230341c6e',
     '\x912f4d6607160256787a2ad40da098ac2afe57ac'
     )
+    and "tokenId" in (select "tokenId" from whitelistTokenId)
 )
 
 ,rawMetrics as (
