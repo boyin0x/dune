@@ -20,6 +20,12 @@ mintCall as (
 ,holder as (
     select distinct "tokenId", first_value("to") OVER (partition by "tokenId" order by evt_block_number desc, evt_index desc) as address
     from hopr_protocol."HoprBoost_evt_Transfer"
+    where "to" not in 
+    (
+    '\xae933331ef0be122f9499512d3ed4fa3896dcf20',
+    '\x2cdd13ddb0346e0f620c8e5826da5d7230341c6e',
+    '\x912f4d6607160256787a2ad40da098ac2afe57ac'
+    )
 )
 
 , holderBoostType as (
